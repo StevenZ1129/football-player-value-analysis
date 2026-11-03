@@ -450,116 +450,6 @@ def make_distribution_figure(
     image.save(output_path, format="PNG")
 
 
-def scalar(summary: pd.DataFrame, metric: str) -> float:
-    value = summary.loc[summary["metric"] == metric, "value"]
-    if value.empty:
-        return float("nan")
-    return float(value.iloc[0])
-
-
-def write_report(
-    output_path: Path,
-    summaries: dict[str, pd.DataFrame],
-) -> None:
-    data_summary = summaries["data_summary"]
-    target_summary = summaries["target_distribution_summary"]
-    small = summaries["small_change_shares"]
-    directions = summaries["direction_summary"].set_index("direction")
-    persistence = summaries["persistence_summary"]
-
-    data_lookup = dict(zip(data_summary["metric"], data_summary["value"]))
-    target_rows = int(float(data_lookup["usable_target_rows"]))
-    unique_players = int(float(data_lookup["target_unique_players"]))
-    zero_share = float(
-        small.loc[small["absolute_delta_log_threshold"] == 0.0, "share"].iloc[0]
-    )
-    one_pct_share = float(
-        small.loc[small["absolute_delta_log_threshold"] == 0.01, "share"].iloc[0]
-    )
-    five_pct_share = float(
-        small.loc[small["absolute_delta_log_threshold"] == 0.05, "share"].iloc[0]
-    )
-    increase_share = float(directions.loc["increase", "share"])
-    decrease_share = float(directions.loc["decrease", "share"])
-    median_days = scalar(target_summary, "median_days_to_next_valuation")
-    m0_mae = scalar(target_summary, "m0_no_change_mae")
-    m0_rmse = scalar(target_summary, "m0_no_change_rmse")
-    q01 = scalar(target_summary, "quantile_0.01")
-    median = scalar(target_summary, "quantile_0.50")
-    q99 = scalar(target_summary, "quantile_0.99")
-
-    paired = int(scalar(persistence, "paired_observations"))
-    if paired:
-        correlation = scalar(persistence, "consecutive_change_pearson_correlation")
-        persistence_text = (
-            f"Among {paired:,} rows with a previous adjustment, the Pearson "
-            f"correlation between consecutive adjustments is {correlation:.3f}."
-        )
-    else:
-        persistence_text = "There were no rows available for a persistence check."
-
-    if zero_share < 0.01:
-        zero_interpretation = (
-            "Exact zero adjustments are almost absent because the source table records "
-            "valuation events when market value changes."
-        )
-    else:
-        zero_interpretation = (
-            "The source contains a material share of consecutive records with no change."
-        )
-
-    report = f"""# Target feasibility report
-
-## Target definition
-
-The target is the next recorded adjustment for the same player:
-
-`delta_log_value = log(next market value) - log(current market value)`
-
-## Data summary
-
-- Raw valuation records: {int(float(data_lookup['raw_rows'])):,}
-- Clean valuation records: {int(float(data_lookup['clean_valuation_rows'])):,}
-- Usable consecutive-record targets: {target_rows:,}
-- Players represented in the target: {unique_players:,}
-- Source date range: {data_lookup['clean_min_date']} to {data_lookup['clean_max_date']}
-- Median days to the next valuation record: {median_days:,.0f}
-
-## Distribution summary
-
-- Exact zero adjustment: {zero_share:.2%}
-- Absolute delta log value below 0.01: {one_pct_share:.2%}
-- Absolute delta log value below 0.05: {five_pct_share:.2%}
-- Increase: {increase_share:.2%}
-- Decrease: {decrease_share:.2%}
-- 1st percentile / median / 99th percentile: {q01:.3f} / {median:.3f} / {q99:.3f}
-- M0 no-change MAE: {m0_mae:.3f}
-- M0 no-change RMSE: {m0_rmse:.3f}
-
-{persistence_text}
-
-## Feasibility conclusion
-
-The target has enough observations and contains both positive and negative changes, so
-it is feasible for a regression comparison. {zero_interpretation} The proposed model
-therefore predicts the magnitude and direction of the next recorded change, conditional
-on a valuation record occurring. It does not predict whether Transfermarkt will update a
-player or whether the value remains unchanged during periods with no valuation record.
-
-The main analysis should retain the no-change M0 baseline, use a chronological split,
-and report subgroup errors by age and position. If the intended claim includes all
-player-time periods, the project should create a fixed monthly or quarterly panel with
-carried-forward values and treat unchanged periods as zero adjustments. That is a
-different target from the next recorded adjustment analyzed here.
-
-If a direct regression model stays close to M0, a useful secondary diagnostic is to
-separate the problem into zero versus nonzero adjustment and, conditional on a nonzero
-adjustment, its direction and magnitude. This should remain a robustness analysis unless
-the main regression comparison fails.
-"""
-    output_path.write_text(report, encoding="utf-8")
-
-
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -575,7 +465,6 @@ def main() -> None:
         summaries["direction_summary"],
         args.output_dir / "target_distribution.png",
     )
-    write_report(args.output_dir / "target_feasibility_report.md", summaries)
 
     print(f"Analyzed {len(target):,} consecutive valuation targets.")
     print(f"Outputs written to: {args.output_dir}")

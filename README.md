@@ -62,7 +62,6 @@ test predictions, and age/position subgroup errors in `output/models`.
 The script downloads the raw file only when it is missing. It then creates the
 following files in `output`:
 
-- `target_feasibility_report.md`: interpretation and recommendation
 - `data_summary.csv`: source and target data checks
 - `target_distribution_summary.csv`: descriptive statistics
 - `small_change_shares.csv`: zero and small-adjustment proportions

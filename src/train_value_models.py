@@ -675,80 +675,6 @@ def subgroup_metric_frame(
     return pd.DataFrame(rows)
 
 
-def write_report(
-    path: Path,
-    metrics: pd.DataFrame,
-    checks: dict[str, object],
-    cutoff: pd.Timestamp,
-    boundary_rows: int,
-    ridge_alpha: float,
-    direction_threshold: float,
-) -> None:
-    overall = metrics.loc[metrics["evaluation_split"] == "chronological_test"].copy()
-    overall = overall.set_index("model")
-    m0_mae = float(overall.loc["M0_no_change", "mae"])
-    long_mae = float(overall.loc["M_long", "mae"])
-    combined_mae = float(overall.loc["M_combined", "mae"])
-    combined_gain = (long_mae - combined_mae) / long_mae if long_mae else float("nan")
-    long_gain = (m0_mae - long_mae) / m0_mae if m0_mae else float("nan")
-
-    report = f"""# Model training report
-
-## Prediction task
-
-The target is `delta_log_v = log(V_t+1) - log(V_t)`, where `V_t+1` is the
-next recorded valuation for the same player.  Every performance feature is
-calculated from appearances strictly before the current valuation date `t`.
-
-## Models
-
-- `M0_no_change`: predicts zero for every observation.
-- `M_long`: static player attributes, cumulative prior performance, and context.
-- `M_combined`: all `M_long` inputs plus performance in the five prior appearances.
-
-Both learned models use Ridge regression with alpha {ridge_alpha:g}.  They use
-the same rows, chronological split, imputation, scaling, and categorical
-encoding.  The recent-performance block is the only design difference.
-
-## Chronological split
-
-- Test period begins: {cutoff.date().isoformat()}
-- Training rows: {int(checks['training_rows']):,}
-- Test rows: {int(checks['test_rows']):,}
-- Boundary rows excluded: {boundary_rows:,}
-- Test players: {int(checks['test_unique_players']):,}
-
-A row is in training only when its next valuation was recorded before the test
-cutoff.  A row is in testing only when its current valuation date is on or
-after the cutoff.  This prevents training outcomes from crossing into the test
-feature period.
-
-## Main chronological-test results
-
-| Model | MAE | RMSE | R-squared | Direction accuracy |
-| --- | ---: | ---: | ---: | ---: |
-| M0 no change | {overall.loc['M0_no_change', 'mae']:.4f} | {overall.loc['M0_no_change', 'rmse']:.4f} | {overall.loc['M0_no_change', 'r2']:.4f} | {overall.loc['M0_no_change', 'direction_accuracy']:.2%} |
-| Long-term | {overall.loc['M_long', 'mae']:.4f} | {overall.loc['M_long', 'rmse']:.4f} | {overall.loc['M_long', 'r2']:.4f} | {overall.loc['M_long', 'direction_accuracy']:.2%} |
-| Combined | {overall.loc['M_combined', 'mae']:.4f} | {overall.loc['M_combined', 'rmse']:.4f} | {overall.loc['M_combined', 'r2']:.4f} | {overall.loc['M_combined', 'direction_accuracy']:.2%} |
-
-The long-term model changes MAE by {long_gain:.2%} relative to M0.  Adding the
-five-match block changes MAE by {combined_gain:.2%} relative to the long-term
-model.  Direction accuracy uses a plus/minus {direction_threshold:g} delta-log
-band for no material change.
-
-## Interpretation limits
-
-The target is conditional on another valuation record occurring.  The model
-does not predict when Transfermarkt will issue that record.  Player profile
-fields are snapshot attributes; current/highest market value and current club
-from the player profile table are deliberately excluded because they can reveal
-future information in historical rows.  The same five-match-eligible sample is
-used for both learned models, so the comparison does not cover players without
-five earlier recorded appearances.
-"""
-    path.write_text(report, encoding="utf-8")
-
-
 def save_metadata(
     path: Path,
     cutoff: pd.Timestamp,
@@ -968,15 +894,6 @@ def main() -> None:
     joblib.dump(combined_model, args.model_dir / "combined_ridge.joblib", compress=3)
     save_metadata(
         args.model_dir / "model_metadata.json", cutoff, checks, args
-    )
-    write_report(
-        args.output_dir / "model_training_report.md",
-        metrics,
-        checks,
-        cutoff,
-        boundary_rows,
-        args.ridge_alpha,
-        args.direction_threshold,
     )
 
     print(metrics.to_string(index=False))
