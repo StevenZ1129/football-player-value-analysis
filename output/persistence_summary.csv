@@ -1,0 +1,6 @@
+metric,value
+paired_observations,574307.0
+consecutive_change_pearson_correlation,0.25462421091148535
+consecutive_change_rank_correlation,0.34658654807844164
+previous_change_baseline_mae,0.3244851809938702
+previous_change_baseline_rmse,0.5010587012022443

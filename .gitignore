@@ -1,0 +1,20 @@
+# Raw datasets are downloaded locally and are not committed.
+data/raw/
+
+# Trained model binaries and large row-level predictions.
+/models/
+output/models/test_predictions.csv.gz
+
+# Temporary environments, caches, and local editor files.
+tmp/
+__pycache__/
+*.py[cod]
+.venv/
+.idea/
+
+# Operating-system files.
+.DS_Store
+Thumbs.db
+
+# Working documents are kept locally and not published to the repository.
+*.docx

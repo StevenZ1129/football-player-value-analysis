@@ -1,0 +1,31 @@
+feature,block,used_in_long_model,used_in_combined_model,definition
+age_years,static,True,True,Age at the current valuation date.
+height_in_cm,static,True,True,Player height from the profile table.
+career_matches,long_term,True,True,Appearances strictly before valuation t.
+career_minutes,long_term,True,True,Cumulative minutes strictly before valuation t.
+career_goals,long_term,True,True,Cumulative goals strictly before valuation t.
+career_assists,long_term,True,True,Cumulative assists strictly before valuation t.
+career_yellow_cards,long_term,True,True,Cumulative yellow cards before valuation t.
+career_red_cards,long_term,True,True,Cumulative red cards before valuation t.
+career_goals_per90,long_term,True,True,Cumulative goals per 90 minutes before valuation t.
+career_assists_per90,long_term,True,True,Cumulative assists per 90 minutes before valuation t.
+career_minutes_per_match,long_term,True,True,Cumulative average minutes per appearance.
+log_market_value,context,True,True,Log of market value at the current valuation date.
+previous_delta_log_v,context,True,True,Previous recorded log market-value adjustment.
+days_since_previous_valuation,context,True,True,Days since the preceding valuation record.
+valuation_count_prior,context,True,True,Number of valuation records before the current one.
+has_previous_valuation,context,True,True,Indicator that a preceding valuation exists.
+last5_minutes,last_five_matches,False,True,Minutes in the five appearances before valuation t.
+last5_goals,last_five_matches,False,True,Goals in the five appearances before valuation t.
+last5_assists,last_five_matches,False,True,Assists in the five appearances before valuation t.
+last5_yellow_cards,last_five_matches,False,True,Yellow cards in the five prior appearances.
+last5_red_cards,last_five_matches,False,True,Red cards in the five prior appearances.
+last5_goals_per90,last_five_matches,False,True,Goals per 90 in the five prior appearances.
+last5_assists_per90,last_five_matches,False,True,Assists per 90 in the five prior appearances.
+last5_span_days,last_five_matches,False,True,Days covered by the five prior appearances.
+position,static,True,True,Broad playing position.
+sub_position,static,True,True,Detailed playing position.
+foot,static,True,True,Preferred foot.
+country_of_citizenship,static,True,True,Player citizenship from the profile table.
+player_club_domestic_competition_id,context,True,True,Domestic competition at valuation t.
+valuation_month,context,True,True,Calendar month of valuation t.
